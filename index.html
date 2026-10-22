@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>e-Boks ID</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="180x180" href="e-Wallet.png?v=4">
+<link rel="apple-touch-icon" sizes="180x180" href="e-Wallet.png?v=4">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="e-Wallet.png?v=4">
+<link rel="shortcut icon" href="e-Wallet.png?v=4">
+<script>
+  const savedTheme = localStorage.getItem('eWalletTheme');
+  document.documentElement.dataset.theme = savedTheme === 'light' ? 'light' : 'dark';
+</script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  color-scheme: light;
+  --crimson: #C8103E;
+  --crimson-dark: #A00D32;
+  --bg: #F2F2F7;
+  --text: #1C1C1E;
+  --subtext: #6C6C70;
+  --border: #E5E5EA;
+  --surface: #FFFFFF;
+  --surface-pressed: rgba(0,0,0,0.03);
+  --control-bg: #E5E5EA;
+  --tab-bg: #EBEBF0;
+  --tab-active: #FFFFFF;
+  --tab-text: #8A8A8E;
+  --delete-bg: rgba(0,0,0,0.06);
+  --login-bg: #F8F0F2;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --text: #F5F5F7;
+  --subtext: #929297;
+  --border: #2C2C2E;
+  --surface: #1C1C1E;
+  --surface-pressed: #29292C;
+  --control-bg: #3A3A3C;
+  --tab-bg: #111113;
+  --tab-active: #353537;
+  --tab-text: #F5F5F7;
+  --delete-bg: #2C2C2E;
+  --login-bg: #000000;
+}
+
+html, body {
+  height: 100%; width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.phone {
+  width: 100%; height: 100%;
+  background: var(--bg); overflow: hidden; position: relative;
+  display: flex; flex-direction: column;
+}
+
+.dynamic-island { display: none; }
+
+.status-bar {
+  display: none;
+}
+.status-left, .status-time, .status-icons { display:none; }
+
+.screen {
+  display: none; flex-direction: column; flex: 1; overflow: hidden;
+  background: var(--bg); animation: fadeIn 0.18s ease;
+}
+.screen.active { display: flex; }
+#s-hjem.screen { background:#000; color:#F5F5F7; }
+#s-hjem .screen-scroll { background:#000; }
+@keyframes fadeIn { from{opacity:0;transform:translateX(5px)} to{opacity:1;transform:none} }
+
+.screen-scroll {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.screen-scroll::-webkit-scrollbar { display: none; }
+
+.nav-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 20px 8px; flex-shrink: 0;
+  border-radius: 0;
+}
+/* No phone border radius needed in fullscreen mode */
+#s-hjem > .nav-header {
+  border-radius: 0;
+  height: 44px; margin-top: 10px; padding: 0 16px;
+}
+.nav-title { font-size: 17px; font-weight: 600; color: var(--text); }
+.nav-back {
+  display: flex; align-items: center; gap: 4px;
+  color: var(--crimson); font-size: 17px; cursor: pointer;
+  background: none; border: none; padding: 4px 0;
+}
+.nav-back svg { width: 9px; height: 15px; }
+.page-title { font-size: 34px; font-weight: 800; color: var(--text); padding: 2px 20px 14px; }
+#s-hjem .page-title { color:#F5F5F7; padding:22px 16px 55px; }
+#s-indstillinger.screen { background:var(--bg); color:var(--text); }
+#s-indstillinger .screen-scroll { background:var(--bg); }
+#s-indstillinger .page-title { color:var(--text); }
+#s-indstillinger .menu-group { background:var(--surface); }
+#s-indstillinger .menu-item { border-bottom-color:var(--border); }
+#s-indstillinger .menu-label { color:var(--text); }
+#s-indstillinger .menu-item:active { background:var(--surface-pressed); }
+#s-indstillinger .menu-chevron svg { color:var(--subtext); }
+#s-indstillinger .log-af-btn { background:rgba(200,16,62,0.18); color:#FF5474; }
+#s-indstillinger .delete-btn { background:var(--delete-bg); color:var(--text); }
+#s-indstillinger .settings-version { color:var(--subtext); }
+#s-indstillinger .tab-bar { padding:0 16px max(14px, env(safe-area-inset-bottom)); }
+#s-indstillinger .tab-bar-pill {
+  background:var(--tab-bg); border:1px solid var(--border); padding:4px; gap:2px;
+  box-shadow:none;
+}
+#s-indstillinger .tab { color:var(--tab-text); font-size:12px; padding:8px 28px 7px; }
+#s-indstillinger .tab.active { background:var(--tab-active); color:var(--crimson); box-shadow:none; }
+#s-indstillinger .tab svg { width:24px; height:24px; }
+#s-indstillinger .tab[onclick*="s-indstillinger"] svg { width:26px; height:26px; stroke-width:2.2; }
+.theme-choice {
+  display:flex; align-items:center; gap:12px; padding:12px 16px;
+  border-bottom:0.5px solid var(--border);
+}
+.theme-choice:last-child { border-bottom:none; }
+.theme-choice-label { flex:1; color:var(--text); font-size:16px; }
+.theme-switch {
+  display:flex; gap:3px; padding:3px; border-radius:10px;
+  background:var(--control-bg);
+}
+.theme-option {
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  min-width:78px; padding:8px 10px; border:0; border-radius:8px;
+  background:transparent; color:var(--text); font:inherit; font-size:13px;
+  cursor:pointer; transition:background 0.15s, box-shadow 0.15s;
+}
+.theme-option svg { width:16px; height:16px; }
+.theme-option[aria-pressed="true"] {
+  background:var(--surface); box-shadow:0 1px 3px rgba(0,0,0,0.18);
+  font-weight:600;
+}
+#s-hjem #carouselOuter { margin:0 20px 8px !important; }
+#s-hjem .home-tools-pill {
+  display:grid; grid-template-columns:1fr 1fr;
+  width:94px; height:50px; padding:0;
+  border:1.5px solid #303034; border-radius:999px;
+  background:#111113; overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,0.025);
+}
+#s-hjem .home-tool-half {
+  position:relative; min-width:0; height:100%; overflow:hidden;
+}
+#s-hjem .home-tool-image {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  display:block; width:28px; height:28px; max-width:none;
+  object-fit:contain; pointer-events:none; user-select:none;
+}
+#s-hjem .nav-action-btn {
+  position:absolute; inset:0; z-index:1; width:100%; height:100%; padding:0;
+  border:none; border-radius:0; background:transparent; color:transparent;
+}
+#s-hjem .nav-action-btn:focus-visible { outline:none; }
+#s-hjem .home-tools-pill:focus-within { outline:2px solid rgba(255,255,255,0.65); outline-offset:3px; }
+#s-hjem .home-share-qr { display:block; width:24px; height:24px; object-fit:contain; }
+#s-hjem .home-share-qr { display:block; width:24px; height:24px; object-fit:contain; }
+#s-qr.screen { background:#000; color:#F5F5F7; }
+#s-qr > .nav-header {
+  display:grid; grid-template-columns:48px 1fr 48px; align-items:center;
+  height:66px; padding:max(14px, env(safe-area-inset-top)) 16px 8px;
+}
+#s-qr .nav-back {
+  width:42px; height:42px; justify-content:center; border-radius:50%;
+  background:#242426; color:#F5F5F7; padding:0;
+}
+#s-qr .nav-back svg { width:12px; height:20px; }
+#s-qr .nav-title { color:#F5F5F7 !important; text-align:center; }
+#s-qr .screen-scroll {
+  display:flex; flex:1 1 0; flex-direction:column; gap:16px; min-height:0;
+  overflow-y:auto; padding:8px 16px 16px; background:#000;
+}
+#s-qr .qr-profile-card {
+  display:flex; flex:0 0 auto; min-height:auto; flex-direction:column; align-items:center;
+  margin:0; padding:16px; border-radius:20px; background:#1C1C1E;
+}
+#s-qr .qr-profile-photo {
+  width:136px; height:176px; flex:0 0 auto; overflow:hidden;
+  border-radius:10px; background:#333336; margin-bottom:12px;
+}
+#s-qr .qr-profile-name {
+  width:100%; color:#F5F5F7; font-size:20px; font-weight:600;
+  line-height:1.25; text-align:center; margin-bottom:4px;
+}
+#s-qr .qr-profile-subtitle { color:#929297; font-size:15px; margin-bottom:16px; }
+#s-qr .qr-profile-divider { width:100%; height:1px; flex:0 0 auto; background:#343437; }
+#s-qr .qr-code-wrap {
+  width:min(100%, 300px); flex:0 0 auto; align-self:center;
+  margin:16px auto 0; padding:10px; border-radius:12px;
+  background:#F5F0E3; box-shadow:none;
+}
+#s-qr canvas#qrCanvas { display:block; width:100%; max-width:none; height:auto; aspect-ratio:1; }
+#s-qr .qr-spacer { display:none; }
+#s-qr .qr-details-actions { display:grid; gap:16px; flex:0 0 auto; }
+#s-qr .qr-static-action {
+  min-height:52px; display:flex; align-items:center; gap:16px;
+  padding:0 16px; border-radius:16px; background:#1C1C1E;
+  color:#F5F5F7; font-size:17px; font-weight:400;
+}
+#s-qr .qr-static-action svg { width:22px; height:22px; flex:0 0 auto; }
+#s-qr .qr-static-action-label { flex:1; }
+#s-qr .qr-static-action.delete { color:var(--crimson); }
+#s-qr .tab-bar { padding:0 16px max(14px, env(safe-area-inset-bottom)); }
+#s-qr .tab-bar-pill {
+  background:#111113; border:1px solid #28282B; padding:4px; gap:2px; box-shadow:none;
+}
+#s-qr .tab { color:#F5F5F7; font-size:12px; padding:8px 28px 7px; }
+#s-qr .tab.active { background:#353537; color:var(--crimson); box-shadow:none; }
+#s-qr .tab[onclick*="s-indstillinger"] svg { width:26px; height:26px; stroke-width:2.2; }
+:root[data-theme="light"] #s-qr.screen { background:var(--bg); color:var(--text); }
+:root[data-theme="light"] #s-qr .nav-back { background:#E5E5EA; color:var(--text); }
+:root[data-theme="light"] #s-qr .nav-title { color:var(--text) !important; }
+:root[data-theme="light"] #s-qr .screen-scroll { background:var(--bg); }
+:root[data-theme="light"] #s-qr .qr-profile-card { background:var(--surface); }
+:root[data-theme="light"] #s-qr .qr-profile-name { color:var(--text); }
+:root[data-theme="light"] #s-qr .qr-profile-subtitle { color:var(--subtext); }
+:root[data-theme="light"] #s-qr .qr-profile-divider { background:var(--border); }
+:root[data-theme="light"] #s-qr .qr-code-wrap { background:#FFFFFF; }
+:root[data-theme="light"] #s-qr .qr-static-action {
+  background:var(--surface); color:var(--text);
+}
+:root[data-theme="light"] #s-qr .qr-static-action.delete { color:var(--crimson); }
+:root[data-theme="light"] #s-qr .tab-bar-pill {
+  background:var(--tab-bg); border-color:var(--border);
+}
+:root[data-theme="light"] #s-qr .tab { color:var(--tab-text); }
+:root[data-theme="light"] #s-qr .tab.active { background:var(--tab-active); }
+
+/* ── TAB BAR — floating pill island, 1:1 with reference ── */
+.tab-bar {
+  display: flex;
+  background: transparent;
+  border-top: none;
+  padding: 0 16px max(28px, env(safe-area-inset-bottom));
+  flex-shrink: 0;
+  justify-content: center;
+}
+.tab-bar-pill {
+  display: flex;
+  background: var(--tab-bg);
+  border-radius: 50px;
+  padding: 5px;
+  gap: 4px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+}
+#s-hjem .tab-bar { padding:0 16px max(14px, env(safe-area-inset-bottom)); }
+#s-hjem .tab-bar-pill {
+  background:#111113; border:1px solid #28282B; padding:4px; gap:2px;
+  box-shadow:none;
+}
+:root[data-theme="light"] #s-hjem.screen { background:var(--bg); color:var(--text); }
+:root[data-theme="light"] #s-hjem .screen-scroll { background:var(--bg); }
+:root[data-theme="light"] #s-hjem .page-title { color:var(--text); }
+:root[data-theme="light"] #s-hjem .menu-group { background:var(--surface); }
+:root[data-theme="light"] #s-hjem .menu-item { border-bottom-color:var(--border); }
+:root[data-theme="light"] #s-hjem .menu-label { color:var(--text); }
+:root[data-theme="light"] #s-hjem .menu-item:active { background:var(--surface-pressed); }
+:root[data-theme="light"] #s-hjem .tab-bar-pill {
+  background:var(--tab-bg); border-color:var(--border);
+}
+:root[data-theme="light"] #s-hjem .tab { color:var(--tab-text); }
+:root[data-theme="light"] #s-hjem .tab.active { background:var(--tab-active); }
+:root[data-theme="light"] #s-hjem .home-tools-pill {
+  background:var(--tab-bg); border-color:var(--border);
+}
+.tab {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 2px; cursor: pointer; transition: color 0.12s;
+  color: var(--tab-text); font-size: 10px; font-weight: 500;
+  padding: 8px 28px 6px; border-radius: 44px;
+}
+#s-hjem .tab { color:#F5F5F7; font-size:12px; padding:8px 28px 7px; }
+.tab.active {
+  background: var(--tab-active);
+  color: var(--crimson);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+#s-hjem .tab.active { background:#353537; color:var(--crimson); box-shadow:none; }
+#s-hjem .tab[onclick*="s-indstillinger"] svg { width:26px; height:26px; stroke-width:2.2; }
+.tab svg { width: 24px; height: 24px; }
+.tab img { display:block; width:24px; height:24px; object-fit:contain; }
+#s-hjem .tab[onclick*="s-indstillinger"] img { width:26px; height:26px; }
+.tab.active[onclick*="s-indstillinger"] img {
+  filter:brightness(0) saturate(100%) invert(18%) sepia(91%) saturate(4594%) hue-rotate(333deg) brightness(82%) contrast(108%);
+}
+
+/* ── ID CARD ── */
+.id-card-wrap { margin: 0 16px 8px; }
+
+.id-card {
+  width: 100%;
+  aspect-ratio: 85.6 / 54;
+  border-radius: 18px; overflow: hidden; position: relative;
+  background: linear-gradient(138deg,
+    #E5175A 0%,
+    #C8103E 28%,
+    #A00D32 58%,
+    #750920 100%
+  );
+  box-shadow: 0 14px 40px rgba(180,10,50,0.48), 0 3px 10px rgba(0,0,0,0.14);
+  color: white; cursor: default; user-select: none; -webkit-user-select: none;
+}
+#s-hjem .id-card {
+  background:
+    radial-gradient(ellipse 52% 110% at 0% 100%, rgba(255,35,52,0.23), transparent 88%),
+    linear-gradient(108deg, #290609 0%, #4C0B13 25%, #751620 51%, #A34751 77%, #BD5660 100%);
+  box-shadow:0 14px 38px rgba(120,5,28,0.28);
+}
+#s-hjem .id-card--age {
+  background:
+    linear-gradient(108deg,#455F65 0%,#1D414B 47%,#405A62 100%);
+  box-shadow:0 14px 38px rgba(14,51,61,0.28);
+}
+#s-hjem .id-card--age .card-type { text-transform:uppercase; }
+
+.card-art {
+  position:absolute; inset:0; z-index:0; width:100%; height:100%;
+  pointer-events:none;
+}
+#s-hjem .id-card .card-radial,
+#s-hjem .id-card .card-shimmer,
+#landscapeCard .card-radial,
+#landscapeCard .card-shimmer { display:none; }
+
+.card-radial {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(ellipse at 22% 16%,
+    rgba(255,255,255,0.24) 0%,
+    rgba(255,255,255,0.06) 36%,
+    transparent 60%
+  );
+}
+
+/* Shimmer — every 2.4s (more frequent as requested) */
+@keyframes cardShimmer {
+  0%   { transform: translateX(-230%) skewX(-18deg); opacity: 0; }
+  5%   { opacity: 1; }
+  30%  { transform: translateX(290%) skewX(-18deg); opacity: 0; }
+  100% { transform: translateX(290%) skewX(-18deg); opacity: 0; }
+}
+.card-shimmer { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
+.card-shimmer::after {
+  content: ''; position: absolute; top: -15%; left: 0;
+  width: 42%; height: 130%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.04) 18%,
+    rgba(255,255,255,0.24) 50%,
+    rgba(255,255,255,0.04) 82%,
+    transparent 100%
+  );
+  animation: cardShimmer 2.4s ease-in-out infinite;
+}
+
+.card-inner {
+  position: absolute; inset: 0; z-index: 3;
+  padding: 13px 15px 11px;
+  display: flex; flex-direction: column;
+}
+
+.card-header { display: flex; justify-content: space-between; align-items: center; }
+
+/* e-Boks logo — NO pill background: white rounded square icon + white "Boks" text directly on card */
+.card-logo-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: none; padding: 0;
+}
+.eboks-icon {
+  width: 32px; height: 32px; background: white; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+/* Red "e" inside white square — larger */
+.eboks-e {
+  font-size: 22px; font-weight: 900; color: var(--crimson); font-style: normal;
+  line-height: 1; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  margin-top: 1px;
+}
+/* "Boks" in white, bold */
+.card-logo-text { font-size: 16px; font-weight: 800; color: white; letter-spacing: -0.2px; }
+/* "e-Boks ID" right side — larger, white, bold */
+.card-type { font-size: 15px; font-weight: 700; color: white; letter-spacing: -0.1px; }
+#s-hjem .eboks-icon { width:30px; height:30px; border-radius:7px; }
+#s-hjem .eboks-e {
+  display:flex; align-items:center; justify-content:center;
+  color:#4A0712;
+  font-family:"Aybrion Medium",sans-serif;
+  font-size:23px; font-weight:400; line-height:1;
+}
+#s-hjem .id-card--age .eboks-e { color:#1F6370; }
+#s-hjem .eboks-logo { display:block; width:100px; height:auto; object-fit:contain; flex-shrink:0; }
+#s-hjem .card-logo-pill { gap:7px; }
+#s-hjem .card-logo-text {
+  display:flex; align-items:center; height:30px; overflow:visible;
+  font-family:"Aybrion Medium","Arial Black",sans-serif;
+  font-size:19px; font-weight:400; letter-spacing:0; line-height:1;
+}
+#s-hjem .card-logo-cap,
+#s-hjem .card-logo-rest { font-size:19px; font-weight:400; line-height:1; }
+#s-hjem .card-type {
+  font-family:"Shree Punjabi 3187 Medium",sans-serif;
+  font-size:14px; font-weight:400; letter-spacing:0;
+}
+
+/* Body: centered vertically on card */
+.card-body { display: flex; align-items: center; gap: 13px; flex: 1; margin-top: 8px; }
+
+/* Photo — NO border, no outline */
+.card-photo {
+  width: 66px; height: 80px; border-radius: 6px; overflow: hidden;
+  background: #CDA09C; flex-shrink: 0;
+  border: none;
+  position: relative;
+}
+#s-hjem .card-photo {
+  width:34%; max-width:104px; height:auto; aspect-ratio:0.77; border-radius:10px;
+}
+#s-hjem .id-card--age #aldersbevisPhotoDisplay {
+  width:34% !important; max-width:104px; height:auto !important;
+  aspect-ratio:0.77; border-radius:10px;
+}
+.card-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+.card-photo-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+
+/* Text block centered alongside photo */
+.card-text { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.card-fl { font-size: 10px; color: rgba(255,255,255,0.62); margin-bottom: 1px; font-weight: 400; }
+.card-name { font-size: 17px; font-weight: 700; line-height: 1.1; margin-bottom: 9px; }
+.card-dob  { font-size: 14px; font-weight: 500; }
+.card-footer { display: flex; justify-content: flex-end; margin-top: auto; }
+.card-age { font-size: 36px; font-weight: 800; color: rgba(255,255,255,0.92); line-height: 1; letter-spacing: -1px; }
+#s-hjem .card-inner { padding:15px 20px 14px; }
+#s-hjem .card-body { gap:18px; margin-top:12px; }
+#s-hjem .card-name {
+  font-family:"Shree Punjabi 3187 Medium",sans-serif;
+  font-size:17px; font-weight:400; line-height:1.12; margin-bottom:0;
+}
+#s-hjem .card-text { align-self:flex-end; }
+#s-hjem .card-text .card-fl:nth-child(3),
+#s-hjem .card-dob,
+#s-hjem .card-footer { display:none; }
+
+/* Dots */
+.dots { display:flex; gap:6px; justify-content:center; margin:6px 0 12px; }
+#s-hjem .dots { margin:64px 0 22px; }
+.dot { width:7px; height:7px; border-radius:50%; background:rgba(0,0,0,0.14); }
+.dot.active { background:rgba(0,0,0,0.32); }
+#s-hjem .dot { background:#39393D; }
+#s-hjem .dot.active { background:#8E8E93; }
+
+/* Menu */
+.menu-group { background:var(--surface); border-radius:14px; margin:0 16px 10px; overflow:hidden; }
+#s-hjem .menu-group { background:#1C1C1E; border-radius:18px; margin:0 16px 10px; }
+.menu-item {
+  display:flex; align-items:center; gap:14px; padding:14px 16px; cursor:pointer;
+  border-bottom:0.5px solid var(--border); transition:background 0.1s;
+}
+#s-hjem .menu-item { padding:20px 20px; border-bottom-color:#2C2C2E; }
+.menu-item:last-child { border-bottom:none; }
+.menu-item:active { background:rgba(0,0,0,0.03); }
+#s-hjem .menu-item:active { background:#29292C; }
+.menu-icon { width:24px; display:flex; align-items:center; justify-content:center; color:var(--crimson); flex-shrink:0; }
+.menu-icon svg { width:21px; height:21px; }
+.menu-icon img { width:21px; height:21px; object-fit:contain; display:block; }
+#s-hjem .menu-icon svg { width:24px; height:24px; stroke-width:1.8; }
+#s-hjem .menu-icon img { width:24px; height:24px; }
+.menu-label { font-size:16px; color:var(--text); flex:1; font-weight:400; }
+#s-hjem .menu-label { color:#F5F5F7; font-size:17px; }
+.menu-chevron svg { width:7px; height:12px; color:#C7C7CC; }
+
+/* Buttons */
+.cta-btn {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  background:var(--crimson); color:white; border:none; border-radius:14px;
+  padding:17px; font-size:17px; font-weight:600; cursor:pointer; width:100%;
+  transition:background 0.15s, transform 0.1s;
+}
+.cta-btn:active { background:var(--crimson-dark); transform:scale(0.98); }
+.log-af-btn { background:rgba(200,16,62,0.09); color:var(--crimson); border:none; border-radius:20px; padding:8px 18px; font-size:15px; font-weight:500; cursor:pointer; }
+.delete-btn { display:block; margin:0 auto; background:rgba(0,0,0,0.06); color:var(--text); border:none; border-radius:22px; padding:13px 32px; font-size:15px; font-weight:600; cursor:pointer; }
+
+/* Nav action buttons — sit inside shared pill container */
+.nav-action-btn {
+  width: 40px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; background: var(--surface); color: var(--crimson);
+  padding: 0 10px;
+}
+.nav-action-btn:active { background: rgba(200,16,62,0.06); }
+.nav-action-btn svg { width: 19px; height: 19px; }
+
+/* QR */
+.qr-wrap {
+  background:var(--surface); border-radius:16px; padding:14px;
+  margin:0 16px 14px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 2px 12px rgba(0,0,0,0.07);
+}
+canvas#qrCanvas { width:100%; max-width:290px; height:auto; aspect-ratio:1; image-rendering:pixelated; display:block; }
+
+/* Toggles */
+.toggle-list { background:var(--surface); border-radius:14px; margin:0 16px; overflow:hidden; }
+.toggle-row { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:0.5px solid var(--border); }
+.toggle-row:last-child { border-bottom:none; }
+.toggle-label { font-size:16px; color:var(--text); }
+.toggle-sw { width:51px; height:31px; border-radius:16px; position:relative; cursor:pointer; border:none; transition:background 0.2s; flex-shrink:0; background:var(--crimson); }
+.toggle-sw.off { background:var(--control-bg); }
+.toggle-sw::after { content:''; position:absolute; top:2.5px; right:2.5px; width:26px; height:26px; background:white; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,0.25); transition:transform 0.2s; }
+.toggle-sw.off::after { transform:translateX(-20px); }
+
+/* Login */
+.login-wrap { flex:1; display:flex; align-items:center; justify-content:center; background:var(--login-bg); }
+.login-icon { width:180px; height:180px; position:relative; display:flex; align-items:center; justify-content:center; }
+.ripple-ring { position:absolute; border-radius:50%; background:rgba(200,16,62,0.10); animation:rp 2.2s ease-in-out infinite; }
+.r1{width:180px;height:180px;} .r2{width:148px;height:148px;animation-delay:0.4s;background:rgba(200,16,62,0.14);}
+@keyframes rp{0%,100%{transform:scale(0.94);opacity:.6}50%{transform:scale(1.06);opacity:1}}
+.login-circle{width:100px;height:100px;background:var(--crimson);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(200,16,62,0.4);z-index:1;}
+.powered-by{display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;color:var(--subtext);margin-top:10px;}
+.powered-dot{width:20px;height:20px;border-radius:5px;background:linear-gradient(135deg,#6B7AE8,#C084FC);display:flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:900;}
+
+/* Forms */
+.form-group{margin-bottom:12px;}
+.form-label{font-size:12px;font-weight:600;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;padding-left:4px;display:block;}
+.form-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:16px;color:var(--text);outline:none;font-family:inherit;transition:border-color 0.15s;}
+.form-input:focus{border-color:var(--crimson);}
+select.form-input{appearance:none;-webkit-appearance:none;cursor:pointer;}
+.info-card{background:var(--surface);border-radius:14px;padding:16px;margin:0 16px 12px;}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border);}
+.info-row:last-child{border-bottom:none;}
+.info-key{font-size:14px;color:var(--subtext);}
+.info-val{font-size:14px;font-weight:500;color:var(--text);}
+.settings-version{text-align:center;font-size:14px;color:var(--subtext);padding:30px 0 10px;}
+
+/* Modal */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,0.38);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px);}
+.overlay.show{display:flex;}
+.modal{background:var(--surface);border-radius:20px;padding:28px 24px 20px;margin:20px;width:100%;max-width:320px;text-align:center;}
+.modal h3{font-size:18px;font-weight:700;color:var(--text);margin-bottom:10px;}
+.modal p{font-size:14px;color:var(--subtext);line-height:1.5;margin-bottom:22px;}
+.modal-btns{display:flex;gap:10px;}
+.modal-btn{flex:1;padding:13px;border-radius:12px;border:none;font-size:15px;font-weight:600;cursor:pointer;}
+.modal-btn.cancel{background:var(--bg);color:var(--text);}
+.modal-btn.danger{background:var(--crimson);color:white;}
+
+/* ── LANDSCAPE FULLSCREEN OVERLAY ── */
+#landscapeOverlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: #000;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+:root[data-theme="light"] #landscapeOverlay { background:var(--bg); }
+:root[data-theme="light"] #landscapeDots .landscape-dot { background:#D1D1D6; }
+:root[data-theme="light"] #landscapeDots .landscape-dot.active { background:#6C6C70; }
+:root[data-theme="light"] #landscapeCloseBtn {
+  background:var(--surface); box-shadow:0 2px 10px rgba(0,0,0,0.14);
+}
+#landscapeOverlay.show {
+  opacity: 1; pointer-events: all;
+}
+#landscapeCardWrap {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  width: min(580px, calc((100vw - 88px) * 85.6 / 54));
+  opacity: 0;
+  transition: opacity 0.35s ease 0.15s;
+}
+@media (orientation: landscape) {
+  #landscapeCardWrap {
+    transform: translate(-50%, -50%);
+    width: min(580px, calc(100vw - 48px), calc(100vh + 150px));
+  }
+}
+#landscapeOverlay.show #landscapeCardWrap {
+  opacity: 1;
+}
+#landscapeCardWrap { touch-action:none; }
+#landscapeDots {
+  position:absolute; left:24px; top:50%; transform:translateY(-50%);
+  display:flex; flex-direction:column; gap:8px; z-index:5;
+}
+.landscape-dot { width:7px; height:7px; border-radius:50%; background:#39393D; }
+.landscape-dot.active { background:#8E8E93; }
+@media (orientation: landscape) {
+  #landscapeDots { left:28px; top:50%; }
+}
+#landscapeCard {
+  width: 100%;
+  aspect-ratio: 85.6 / 54;
+  border-radius: 22px; overflow: hidden; position: relative;
+  box-shadow: 0 20px 60px rgba(180,10,50,0.55), 0 4px 16px rgba(0,0,0,0.25);
+  color: white; user-select: none; -webkit-user-select: none;
+}
+#landscapeCard .card-art { display:block; }
+#landscapeCard .card-inner { padding:15px 20px 14px; }
+#landscapeCard .eboks-logo { display:block; width:100px; height:auto; object-fit:contain; flex-shrink:0; }
+#landscapeCard .card-photo {
+  width:35%; max-width:170px; height:auto; aspect-ratio:0.77;
+  align-self:flex-end; border-radius:10px;
+}
+#landscapeCard #aldersbevisPhotoDisplay {
+  width:35% !important; max-width:170px; height:auto !important;
+  aspect-ratio:0.77; align-self:flex-end; border-radius:10px;
+}
+#landscapeCard:not(.id-card--age) .card-body {
+  position:absolute; left:20px; right:20px; bottom:16px; height:75%;
+  align-items:flex-end; gap:18px; margin:0;
+}
+#landscapeCard .card-text { align-self:flex-end; margin-bottom:0; }
+#landscapeCard.id-card--age .card-inner > div:nth-child(2) { align-items:flex-end !important; }
+#landscapeCard.id-card--age .card-inner > div:nth-child(2) > div:nth-child(2) { left:35% !important; }
+#landscapeCard .card-name {
+  font-family:"Shree Punjabi 3187 Medium",sans-serif;
+  font-size:17px; font-weight:400; line-height:1.12; margin-bottom:0;
+}
+#landscapeCard .card-type {
+  font-family:"Shree Punjabi 3187 Medium",sans-serif;
+  font-size:14px; font-weight:400; letter-spacing:0;
+}
+#landscapeCard .card-text .card-fl:nth-child(3),
+#landscapeCard .card-dob,
+#landscapeCard .card-footer { display:none; }
+#landscapeCard.id-card--age .card-type { text-transform:uppercase; }
+#landscapeCloseBtn {
+  position: absolute;
+  right:28px; bottom:max(20px, env(safe-area-inset-bottom));
+  width:50px; height:50px;
+  background:#202022;
+  border:none; border-radius:50%;
+  color:var(--crimson); font-size:30px; cursor:pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10;
+  transform:none;
+}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="dynamic-island"></div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="status-left">
+      <span class="status-time" id="statusTime">17:09</span>
+    </div>
+    <div class="status-icons">
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor">
+        <rect x="0"    y="8"  width="3" height="4"  rx="0.7"/>
+        <rect x="4.5"  y="5"  width="3" height="7"  rx="0.7"/>
+        <rect x="9"    y="2"  width="3" height="10" rx="0.7"/>
+        <rect x="13.5" y="0"  width="3" height="12" rx="0.7" opacity="0.28"/>
+      </svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+        <path d="M0.8 4.2C3.8 1.2 12.2 1.2 15.2 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M3 6.8c1.4-1.4 9.6-1.4 11 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M5.5 9.4c1.4-1.4 4.6-1.4 6 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="8" cy="11.4" r="1.2" fill="currentColor"/>
+      </svg>
+      <!-- Battery: green + charging bolt (ref img4) -->
+      <svg width="28" height="13" viewBox="0 0 28 13" fill="none">
+        <rect x="0.5" y="0.5" width="23" height="12" rx="3.5" stroke="currentColor" stroke-opacity="0.35"/>
+        <rect x="2" y="2" width="19" height="9" rx="2" fill="#34C759"/>
+        <path d="M26 4.5v4a2 2 0 0 0 0-4z" fill="currentColor" fill-opacity="0.4"/>
+        <path d="M12 3L10 6.5h2.5L10.5 10" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ════ HJEM ════ -->
+  <div class="screen active" id="s-hjem">
+    <div class="nav-header">
+      <span></span>
+      <!-- ref img1: pill with rounded corners, overflow hidden, divider between buttons -->
+      <div class="home-tools-pill">
+        <div class="home-tool-half">
+          <img class="home-tool-image" src="data:image/png;base64,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" alt="">
+          <button type="button" class="nav-action-btn" aria-label="Tilføj ID" onclick="addCard()"></button>
+        </div>
+        <div class="home-tool-half">
+          <img class="home-tool-image" src="data:image/png;base64,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" alt="">
+          <button type="button" class="nav-action-btn" aria-label="Vis QR-kode" onclick="showScreen('s-qr')"></button>
+        </div>
+      </div>
+    </div>
+    <div class="screen-scroll">
+      <div class="page-title">Hjem</div>
+
+      <!-- Carousel wrapper -->
+      <div style="margin:0 16px 8px; overflow:hidden; border-radius:18px;" id="carouselOuter">
+        <div id="carouselTrack" style="display:flex; transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);">
+
+          <!-- Slide 1: Red e-Boks ID -->
+          <div style="flex:0 0 100%; width:100%;">
+            <div class="id-card">
+              <svg class="card-art" viewBox="0 0 1000 630" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M486 0H1000V225C946 278 900 328 841 326C794 325 766 302 731 265L486 0Z" fill="#FFD3D5" opacity=".09"/>
+                <path d="M0 211C37 171 75 139 123 137C206 133 252 174 296 230L461 404C527 473 551 521 536 576C531 599 521 619 509 630H0Z" fill="#FF8D98" opacity=".08"/>
+              </svg>
+              <div class="card-radial"></div>
+              <div class="card-shimmer"></div>
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-logo-pill">
+                    <img class="eboks-logo" src="e-Boks%20logo%20transparent.png" alt="e-Boks">
+                  </div>
+                  <span class="card-type">E-Boks ID</span>
+                </div>
+                <div class="card-body">
+                  <div class="card-photo">
+                    <div id="cardPhotoDisplay" class="card-photo-placeholder">
+                      <svg viewBox="0 0 66 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="66" height="80" fill="#CDA09C"/>
+                        <circle cx="33" cy="27" r="14" fill="#B8908C"/>
+                        <path d="M2 80C2 62.3 16 48 33 48C50 48 64 62.3 64 80" fill="#B8908C"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="card-text">
+                    <div class="card-fl">Navn</div>
+                    <div class="card-name" id="cardName">sæt navn i indstillinger-&gt; sikkerhed</div>
+                    <div class="card-fl">Fødselsdag</div>
+                    <div class="card-dob" id="cardDob">5 Apr, 2008</div>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <div class="card-age">18+</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 2: Blue Aldersbevis -->
+          <div style="flex:0 0 100%; width:100%;">
+            <div class="id-card id-card--age">
+              <svg class="card-art" viewBox="0 0 1000 630" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M486 0H1000V225C946 278 900 328 841 326C794 325 766 302 731 265L486 0Z" fill="#C6DEE1" opacity=".1"/>
+                <path d="M0 211C37 171 75 139 123 137C206 133 252 174 296 230L461 404C527 473 551 521 536 576C531 599 521 619 509 630H0Z" fill="#B7D0D4" opacity=".1"/>
+              </svg>
+              <div class="card-radial"></div>
+              <div class="card-shimmer"></div>
+              <div class="card-inner" style="display:flex;flex-direction:column;justify-content:space-between;">
+                <div class="card-header">
+                  <div class="card-logo-pill">
+                    <img class="eboks-logo" src="e-Boks%20logo%20transparent.png" alt="e-Boks">
+                  </div>
+                  <span class="card-type">Aldersbevis</span>
+                </div>
+                <div style="position:relative;flex:1;margin-top:6px;display:flex;align-items:center;">
+                  <div id="aldersbevisPhotoDisplay" style="width:80px;height:100px;border-radius:7px;overflow:hidden;flex-shrink:0;background:#7AAAB5;position:relative;z-index:1;">
+                    <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
+                      <rect width="80" height="100" fill="#7AAAB5"/>
+                      <circle cx="40" cy="33" r="17" fill="#6090A0"/>
+                      <path d="M2 100C2 77.9 19.9 60 40 60C60.1 60 78 77.9 78 100" fill="#6090A0"/>
+                    </svg>
+                  </div>
+                  <div style="position:absolute;left:80px;right:0;display:flex;align-items:center;justify-content:center;height:100%;pointer-events:none;">
+                    <span style="font-size:61px;font-weight:800;color:rgba(255,255,255,0.95);line-height:1;letter-spacing:-2px;">18+</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="dots">
+        <div class="dot active" id="dot0"></div>
+        <div class="dot" id="dot1"></div>
+      </div>
+
+      <div class="menu-group">
+        <div class="menu-item" onclick="openLandscape()">
+          <div class="menu-icon"><img src="data:image/png;base64,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" alt="" aria-hidden="true"></div>
+          <span class="menu-label">Vandret visning</span>
+          <div class="menu-chevron"><svg viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1,1 7,7 1,13"/></svg></div>
+        </div>
+        <div class="menu-item" onclick="showScreen('s-qr')">
+          <div class="menu-icon"><span id="homeShareQr" aria-hidden="true"></span></div>
+          <span class="menu-label">Del dine oplysninger</span>
+          <div class="menu-chevron"><svg viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1,1 7,7 1,13"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-bar"><div class="tab-bar-pill"><div class="tab active" onclick="showScreen('s-hjem')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        Hjem
+      </div>
+      <div class="tab" onclick="showScreen('s-indstillinger')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="7.5"/>
+          <circle cx="12" cy="12" r="2.8"/>
+          <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>
+        </svg>
+        Indstillinger
+      </div></div></div>
+  </div>
+
+  <!-- ════ QR ════ -->
+  <div class="screen" id="s-qr">
+    <div class="nav-header" style="padding-top:6px;">
+      <button class="nav-back" onclick="showScreen('s-hjem')">
+        <svg viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="8,1 1,7.5 8,14"/></svg>
+      </button>
+      <span class="nav-title" style="font-size:17px;font-weight:600;color:var(--text);">Detaljer</span>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="screen-scroll">
+      <div class="qr-profile-card">
+        <div id="qrPhotoDisplay" class="qr-profile-photo">
+          <svg viewBox="0 0 140 170" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
+            <rect width="140" height="170" fill="#D0D0D5"/>
+            <circle cx="70" cy="58" r="28" fill="#B0B0B8"/>
+            <path d="M5 170C5 133 34 108 70 108C106 108 135 133 135 170" fill="#B0B0B8"/>
+          </svg>
+        </div>
+        <div id="qrCardName" class="qr-profile-name">sæt navn i indstillinger-&gt; sikkerhed</div>
+        <div class="qr-profile-subtitle">e-Boks ID</div>
+        <div class="qr-profile-divider"></div>
+        <div class="qr-wrap qr-code-wrap">
+          <canvas id="qrCanvas" width="810" height="810" aria-label="Animeret QR-kode"></canvas>
+        </div>
+      </div>
+      <div class="qr-spacer" aria-hidden="true"></div>
+      <div class="qr-details-actions" aria-hidden="true">
+        <div class="qr-static-action">
+          <span class="qr-static-action-label">Vælg, hvad du vil dele</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+        <div class="qr-static-action delete">
+          <span class="qr-static-action-label">Slet ID</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6m4-6v6M5.5 7l1 14h11l1-14M9 7V4h6v3"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="tab-bar"><div class="tab-bar-pill"><div class="tab active" onclick="showScreen('s-hjem')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Hjem
+      </div>
+      <div class="tab" onclick="showScreen('s-indstillinger')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Indstillinger
+      </div></div></div>
+  </div>
+
+  <!-- ════ LOGIN ════ -->
+  <div class="screen" id="s-login" style="background:var(--login-bg);">
+    <div class="login-wrap">
+      <div class="login-icon">
+        <div class="ripple-ring r1"></div><div class="ripple-ring r2"></div>
+        <div class="login-circle">
+          <span style="font-size:52px;font-weight:900;color:white;font-family:-apple-system,BlinkMacSystemFont,sans-serif;line-height:1;">e</span>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 20px 28px;background:var(--login-bg);flex-shrink:0;">
+      <button class="cta-btn" onclick="showScreen('s-hjem')">Log på</button>
+      <div class="powered-by">Powered by dewa <div class="powered-dot">d</div></div>
+    </div>
+  </div>
+
+  <!-- ════ INDSTILLINGER ════ -->
+  <div class="screen" id="s-indstillinger">
+    <div class="nav-header"><span></span><button class="log-af-btn" onclick="showScreen('s-login')">Log af</button></div>
+    <div class="screen-scroll">
+      <div class="page-title">Indstillinger</div>
+      <div class="menu-group">
+        <div class="menu-item" onclick="showScreen('s-sikkerhed')">
+          <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <span class="menu-label">Sikkerhed</span>
+          <div class="menu-chevron"><svg viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1,1 7,7 1,13"/></svg></div>
+        </div>
+        <div class="menu-item" onclick="showScreen('s-sprog')">
+          <div class="menu-icon"><span id="homeShareQr" aria-hidden="true"></span></div>
+          <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+          <span class="menu-label">Hjælp</span>
+          <div class="menu-chevron"><svg viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1,1 7,7 1,13"/></svg></div>
+        </div>
+      </div>
+      <div class="menu-group">
+        <div class="theme-choice">
+          <span class="theme-choice-label" id="themeChoiceLabel">Udseende</span>
+          <div class="theme-switch" role="group" aria-labelledby="themeChoiceLabel">
+            <button class="theme-option" id="themeLight" type="button" aria-label="Lyst tema" aria-pressed="false" onclick="setTheme('light')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+              <span>Lys</span>
+            </button>
+            <button class="theme-option" id="themeDark" type="button" aria-label="Mørkt tema" aria-pressed="false" onclick="setTheme('dark')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"/></svg>
+              <span>Mørk</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div style="height:24px"></div>
+      <button class="delete-btn" onclick="document.getElementById('deleteModal').classList.add('show')">Slet e-Wallet</button>
+      <div class="settings-version">1.10.10 (106)</div>
+    </div>
+    <div class="tab-bar"><div class="tab-bar-pill"><div class="tab" onclick="showScreen('s-hjem')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Hjem
+      </div>
+      <div class="tab active" onclick="showScreen('s-indstillinger')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Indstillinger
+      </div></div></div>
+  </div>
+
+  <!-- ════ SIKKERHED ════ -->
+  <div class="screen" id="s-sikkerhed">
+    <div class="nav-header"><button class="nav-back" onclick="showScreen('s-indstillinger')"><svg viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="8,1 1,7.5 8,14"/></svg> Tilbage</button><span class="nav-title">Sikkerhed</span><div style="width:60px"></div></div>
+    <div class="screen-scroll"><div style="padding:4px 16px 20px;">
+      <div style="font-size:14px;color:var(--subtext);margin-bottom:16px;">Kontakt for ændring af billede</div>
+      <div class="form-group"><label class="form-label">Fulde navn</label><input class="form-input" id="editName" type="text" placeholder="sæt navn i indstillinger-&gt; sikkerhed"></div>
+      <div class="form-group"><label class="form-label">Fødselsdag</label><input class="form-input" id="editDob" type="date" value="2008-04-05"></div>
+      <div class="form-group"><label class="form-label">Bruger-ID</label><input class="form-input" id="editUserId" type="text" value="DK-2008-JJ-8821"></div>
+      <div style="height:20px"></div>
+      <button class="cta-btn" onclick="saveProfile()">Gem ændringer</button>
+    </div></div>
+    <div class="tab-bar"><div class="tab-bar-pill"><div class="tab" onclick="showScreen('s-hjem')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Hjem</div>
+      <div class="tab active" onclick="showScreen('s-indstillinger')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Indstillinger</div></div></div>
+  </div>
+
+  <!-- ════ SPROG ════ -->
+  <div class="screen" id="s-sprog">
+    <div class="nav-header"><button class="nav-back" onclick="showScreen('s-indstillinger')"><svg viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="8,1 1,7.5 8,14"/></svg> Tilbage</button><span class="nav-title">Sprog</span><div style="width:60px"></div></div>
+    <div class="screen-scroll"><div style="padding:4px 16px 20px;">
+      <div style="font-size:14px;color:var(--subtext);margin-bottom:20px;">Vælg dit foretrukne sprog.</div>
+      <div class="form-group"><label class="form-label">Sprog</label><select class="form-input"><option>🇩🇰 Dansk</option><option>🇬🇧 English</option><option>🇩🇪 Deutsch</option><option>🇸🇪 Svenska</option><option>🇳🇴 Norsk</option></select></div>
+      <div style="height:20px"></div>
+      <button class="cta-btn" onclick="showScreen('s-indstillinger')">Gem</button>
+    </div></div>
+    <div class="tab-bar"><div class="tab-bar-pill"><div class="tab" onclick="showScreen('s-hjem')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Hjem</div>
+      <div class="tab active" onclick="showScreen('s-indstillinger')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Indstillinger</div></div></div>
+  </div>
+
+  <!-- ════ OM ════ -->
+  <div class="screen" id="s-om">
+    <div class="nav-header"><button class="nav-back" onclick="showScreen('s-indstillinger')"><svg viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="8,1 1,7.5 8,14"/></svg> Tilbage</button><span class="nav-title">Om</span><div style="width:60px"></div></div>
+    <div class="screen-scroll"><div style="padding:4px 16px;">
+      <div class="info-card">
+        <div class="info-row"><span class="info-key">App navn</span><span class="info-val">e-Boks ID</span></div>
+        <div class="info-row"><span class="info-key">Version</span><span class="info-val">1.10.10 (106)</span></div>
+        <div class="info-row"><span class="info-key">Udgiver</span><span class="info-val">e-Boks A/S</span></div>
+        <div class="info-row"><span class="info-key">Powered by</span><span class="info-val">dewa</span></div>
+        <div class="info-row"><span class="info-key">Licens</span><span class="info-val">© 2024 e-Boks</span></div>
+      </div>
+    </div></div>
+    <div class="tab-bar"><div class="tab-bar-pill"><div class="tab" onclick="showScreen('s-hjem')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Hjem</div>
+      <div class="tab active" onclick="showScreen('s-indstillinger')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Indstillinger</div></div></div>
+  </div>
+
+  <!-- ════ HJÆLP ════ -->
+  <div class="screen" id="s-hjaelp">
+    <div class="nav-header"><button class="nav-back" onclick="showScreen('s-indstillinger')"><svg viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="8,1 1,7.5 8,14"/></svg> Tilbage</button><span class="nav-title">Hjælp</span><div style="width:60px"></div></div>
+    <div class="screen-scroll"><div style="padding:4px 16px;">
+      <div class="menu-group">
+        <div class="menu-item"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span class="menu-label">FAQ</span><div class="menu-chevron"><svg viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1,1 7,7 1,13"/></svg></div></div>
+        <div class="menu-item"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><span class="menu-label">Kontakt support</span><div class="menu-chevron"><svg viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1,1 7,7 1,13"/></svg></div></div>
+        <div class="menu-item"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="menu-label">Send fejlrapport</span><div class="menu-chevron"><svg viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1,1 7,7 1,13"/></svg></div></div>
+      </div>
+    </div></div>
+    <div class="tab-bar"><div class="tab-bar-pill"><div class="tab" onclick="showScreen('s-hjem')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Hjem</div>
+      <div class="tab active" onclick="showScreen('s-indstillinger')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Indstillinger</div></div></div>
+  </div>
+
+  <!-- DELETE MODAL -->
+  <div class="overlay" id="deleteModal">
+    <div class="modal">
+      <h3>Slet e-Wallet</h3>
+      <p>Er du sikker på, at du vil slette din e-Wallet? Denne handling kan ikke fortrydes.</p>
+      <div class="modal-btns">
+        <button class="modal-btn cancel" onclick="document.getElementById('deleteModal').classList.remove('show')">Annuller</button>
+        <button class="modal-btn danger" onclick="document.getElementById('deleteModal').classList.remove('show');showScreen('s-login')">Slet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LANDSCAPE FULLSCREEN OVERLAY -->
+  <div id="landscapeOverlay" onclick="closeLandscape(event)">
+    <button id="landscapeCloseBtn" onclick="closeLandscapeBtn()">✕</button>
+    <div id="landscapeCardWrap">
+      <div id="landscapeCard">
+        <!-- content injected by JS -->
+      </div>
+    </div>
+    <div id="landscapeDots" aria-hidden="true">
+      <span class="landscape-dot active"></span>
+      <span class="landscape-dot"></span>
+    </div>
+  </div>
+
+</div>
+<script>
+function updateThemeOptions(theme) {
+  document.getElementById('themeLight').setAttribute('aria-pressed', String(theme === 'light'));
+  document.getElementById('themeDark').setAttribute('aria-pressed', String(theme === 'dark'));
+  document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#000000' : '#F2F2F7';
+}
+
+function setTheme(theme) {
+  if (theme !== 'light' && theme !== 'dark') {
+    throw new TypeError('Theme must be "light" or "dark".');
+  }
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem('eWalletTheme', theme);
+  updateThemeOptions(theme);
+}
+
+updateThemeOptions(document.documentElement.dataset.theme);
+
+function tick() {
+  const n = new Date();
+  document.getElementById('statusTime').textContent =
+    String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+}
+tick(); setInterval(tick, 15000);
+
+const plusButtonIcon = document.querySelector('#s-hjem .home-tool-half:first-child .home-tool-image');
+if (plusButtonIcon) {
+  plusButtonIcon.src = 'data:image/png;base64,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';
+}
+if (plusButtonIcon) {
+  plusButtonIcon.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Ccircle cx=%2224%22 cy=%2224%22 r=%2219%22 fill=%22none%22 stroke=%22%23B91E39%22 stroke-width=%224%22/%3E%3Cpath d=%22M24 15v18M15 24h18%22 stroke=%22%23B91E39%22 stroke-width=%224%22 stroke-linecap=%22round%22/%3E%3C/svg%3E';
+}
+const topQrIcon = document.querySelector('#s-hjem .home-tool-half:nth-child(2) .home-tool-image');
+const shareQrSlot = document.getElementById('homeShareQr');
+if (topQrIcon && shareQrSlot) {
+  const shareQrImage = topQrIcon.cloneNode(false);
+  shareQrImage.className = 'home-share-qr';
+  shareQrSlot.appendChild(shareQrImage);
+}
+const settingsIconImage = 'data:image/png;base64,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';
+document.querySelectorAll('.tab[onclick*="s-indstillinger"] svg').forEach(function(icon) {
+  const image = document.createElement('img');
+  image.src = settingsIconImage;
+  image.alt = '';
+  image.setAttribute('aria-hidden', 'true');
+  icon.replaceWith(image);
+});
+
+let qrTimer = null;
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 's-qr') {
+    drawQr();
+    qrTimer = setInterval(drawQr, 250);
+  } else if (qrTimer) {
+    clearInterval(qrTimer);
+    qrTimer = null;
+  }
+}
+
+function saveProfile() {
+  const name = document.getElementById('editName').value.trim() || 'sæt navn i indstillinger-> sikkerhed';
+  const dob  = document.getElementById('editDob').value;
+  localStorage.setItem('eWalletProfileName', name);
+  document.getElementById('editName').value = name;
+  document.getElementById('cardName').textContent = name;
+  document.getElementById('qrCardName').textContent = name;
+  if (dob) {
+    const d = new Date(dob + 'T00:00:00');
+    const mo = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+    document.getElementById('cardDob').textContent = d.getDate()+' '+mo[d.getMonth()]+', '+d.getFullYear();
+  }
+  showScreen('s-indstillinger');
+}
+function addCard() { alert('Tilføj nyt kort — funktion kommer snart!'); }
+
+const PROFILE_PHOTO_SRC = 'profile-photo.png';
+
+function setPhotoImage(container, src, inlineStyle = '') {
+  if (!container) return;
+  const image = document.createElement('img');
+  image.src = src;
+  image.alt = 'Foto';
+  if (inlineStyle) image.style.cssText = inlineStyle;
+  container.replaceChildren(image);
+}
+
+function applyEmbeddedProfilePhoto(src) {
+  // e-Boks ID card
+  const d = document.getElementById('cardPhotoDisplay');
+  if (d) { setPhotoImage(d, src); d.className = ''; }
+  // QR profile
+  const qp = document.getElementById('qrPhotoDisplay');
+  setPhotoImage(qp, src, 'width:100%;height:100%;object-fit:cover;display:block;');
+  // Aldersbevis card
+  const ap = document.getElementById('aldersbevisPhotoDisplay');
+  setPhotoImage(ap, src, 'width:100%;height:100%;object-fit:cover;display:block;');
+}
+
+if (PROFILE_PHOTO_SRC) applyEmbeddedProfilePhoto(PROFILE_PHOTO_SRC);
+
+const savedProfileName = localStorage.getItem('eWalletProfileName');
+if (savedProfileName) {
+  document.getElementById('editName').value = savedProfileName;
+  document.getElementById('cardName').textContent = savedProfileName;
+  document.getElementById('qrCardName').textContent = savedProfileName;
+}
+
+// ═══════════════════════════════════════════════════
+//  QR CODE — Version 16, 81×81 modules
+//  High density matching ref image 2
+// ═══════════════════════════════════════════════════
+const N=81, S=810, C=S/N;
+
+function rng32(seed){
+  return function(){
+    seed=(seed+0x6D2B79F5)|0;
+    let t=Math.imul(seed^(seed>>>15),1|seed);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t;
+    return((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+
+function buildQR(rand){
+  const m=Array.from({length:N},()=>new Uint8Array(N));
+  const fx=Array.from({length:N},()=>new Uint8Array(N));
+
+  function finder(r0,c0){
+    for(let r=0;r<7;r++) for(let c=0;c<7;c++){
+      const v=(r===0||r===6||c===0||c===6)||(r>=2&&r<=4&&c>=2&&c<=4)?1:0;
+      m[r0+r][c0+c]=v; fx[r0+r][c0+c]=1;
+    }
+  }
+  finder(0,0); finder(0,N-7); finder(N-7,0);
+
+  function sep(r,c){if(r>=0&&r<N&&c>=0&&c<N){m[r][c]=0;fx[r][c]=1;}}
+  for(let i=0;i<8;i++){sep(7,i);sep(i,7);sep(7,N-1-i);sep(i,N-8);sep(N-8,i);sep(N-1-i,7);}
+
+  for(let i=8;i<N-8;i++){m[6][i]=i%2===0?1:0;fx[6][i]=1;m[i][6]=i%2===0?1:0;fx[i][6]=1;}
+
+  // Alignment patterns for version 16
+  const ap=[6,26,50,74];
+  for(let ai=0;ai<ap.length;ai++) for(let aj=0;aj<ap.length;aj++){
+    const pr=ap[ai],pc=ap[aj];
+    if((pr===6&&pc===6)||(pr===6&&pc===50)||(pr===50&&pc===6)) continue;
+    for(let r=-2;r<=2;r++) for(let c=-2;c<=2;c++){
+      const pr2=pr+r,pc2=pc+c;
+      if(pr2>=0&&pr2<N&&pc2>=0&&pc2<N){
+        const v=(Math.abs(r)===2||Math.abs(c)===2)||(r===0&&c===0)?1:0;
+        m[pr2][pc2]=v; fx[pr2][pc2]=1;
+      }
+    }
+  }
+
+  m[8][N-8]=1; fx[8][N-8]=1;
+  for(let i=0;i<9;i++){fx[8][i]=1;fx[i][8]=1;}
+  for(let i=0;i<8;i++){fx[8][N-1-i]=1;fx[N-1-i][8]=1;}
+
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++)
+    if(!fx[r][c]) m[r][c]=rand()>0.48?1:0;
+
+  return m;
+}
+
+function drawQr(){
+  const canvas=document.getElementById('qrCanvas');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const seed=Math.floor(Date.now()/250)*7919+104729;
+  const m=buildQR(rng32(seed));
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,S,S); ctx.fillStyle='#000';
+  for(let row=0;row<N;row++) for(let col=0;col<N;col++){
+    if(!m[row][col]) continue;
+    ctx.fillRect(col*C, row*C, C, C);
+  }
+}
+drawQr();
+
+// Carousel swipe — smooth spring physics
+// ── LANDSCAPE FULLSCREEN ──
+var landscapeCurrent = 0;
+
+function renderLandscapeCard(slideIndex) {
+  var slides = document.querySelectorAll('#s-hjem #carouselTrack > div');
+  if (!slides[slideIndex]) return;
+  var cardEl = slides[slideIndex].querySelector('.id-card');
+  if (!cardEl) return;
+
+  var lCard = document.getElementById('landscapeCard');
+  var cardStyle = window.getComputedStyle(cardEl);
+  lCard.innerHTML = cardEl.innerHTML;
+  lCard.querySelectorAll('[onclick], input[type="file"]').forEach(function(element) {
+    element.removeAttribute('onclick');
+    if (element.matches('input[type="file"]')) element.remove();
+  });
+  lCard.style.cssText = 'background:' + cardStyle.background + ';box-shadow:' + cardStyle.boxShadow + ';';
+  lCard.className = cardEl.className;
+  lCard.id = 'landscapeCard';
+  landscapeCurrent = slideIndex;
+  document.querySelectorAll('#landscapeDots .landscape-dot').forEach(function(dot, index) {
+    dot.classList.toggle('active', index === landscapeCurrent);
+  });
+}
+
+function openLandscape() {
+  landscapeTransitioning = false;
+  renderLandscapeCard(0);
+  document.getElementById('landscapeOverlay').classList.add('show');
+}
+
+var landscapeTransitioning = false;
+function changeLandscapeCard(direction) {
+  if (landscapeTransitioning) return;
+  var slideCount = document.querySelectorAll('#s-hjem #carouselTrack > div').length;
+  var nextSlide = (landscapeCurrent + direction + slideCount) % slideCount;
+  var lCard = document.getElementById('landscapeCard');
+  var exitX = direction > 0 ? '-42px' : '42px';
+  var enterX = direction > 0 ? '42px' : '-42px';
+  landscapeTransitioning = true;
+  var exitAnimation = lCard.animate(
+    [{ opacity:1, transform:'translateX(0)' }, { opacity:0, transform:'translateX(' + exitX + ')' }],
+    { duration:150, easing:'ease-in', fill:'forwards' }
+  );
+  exitAnimation.onfinish = function() {
+    exitAnimation.cancel();
+    renderLandscapeCard(nextSlide);
+    var enterAnimation = lCard.animate(
+      [{ opacity:0, transform:'translateX(' + enterX + ')' }, { opacity:1, transform:'translateX(0)' }],
+      { duration:210, easing:'ease-out' }
+    );
+    enterAnimation.onfinish = function() {
+      enterAnimation.cancel();
+      landscapeTransitioning = false;
+    };
+  };
+}
+
+var landscapeSwipeStart = null;
+var landscapeSwipeSurface = document.getElementById('landscapeCardWrap');
+landscapeSwipeSurface.addEventListener('pointerdown', function(event) {
+  landscapeSwipeStart = { x:event.clientX, y:event.clientY };
+  landscapeSwipeSurface.setPointerCapture(event.pointerId);
+});
+landscapeSwipeSurface.addEventListener('pointerup', function(event) {
+  if (!landscapeSwipeStart) return;
+  var swipeDistance = window.matchMedia('(orientation: portrait)').matches
+    ? event.clientY - landscapeSwipeStart.y
+    : event.clientX - landscapeSwipeStart.x;
+  landscapeSwipeStart = null;
+  if (Math.abs(swipeDistance) > 36) changeLandscapeCard(swipeDistance < 0 ? 1 : -1);
+});
+landscapeSwipeSurface.addEventListener('pointercancel', function() {
+  landscapeSwipeStart = null;
+});
+
+function closeLandscapeBtn() {
+  document.getElementById('landscapeOverlay').classList.remove('show');
+}
+function closeLandscape(e) {
+  if (e.target === document.getElementById('landscapeOverlay')) closeLandscapeBtn();
+}
+
+// (card clicks disabled — use Vandret visning button instead)
+(function attachCardClicks() {
+  // clicks handled via menu button now
+})();
+
+// Carousel swipe — smooth spring physics (original comment removed above)
+var carouselCurrent = 0;
+var carouselTrack = document.getElementById('carouselTrack');
+var carouselOuter = document.getElementById('carouselOuter');
+var carouselDots  = [document.getElementById('dot0'), document.getElementById('dot1')];
+var carouselGap = 40;
+
+carouselTrack.style.gap = carouselGap + 'px';
+carouselTrack.style.willChange = 'transform';
+carouselTrack.style.transition = 'transform 0.58s cubic-bezier(0.22, 1, 0.36, 1)';
+
+function carouselGoTo(idx) {
+  carouselCurrent = Math.max(0, Math.min(1, idx));
+  carouselTrack.style.transition = 'transform 0.58s cubic-bezier(0.22, 1, 0.36, 1)';
+  carouselTrack.style.transform = 'translateX(-' + (carouselCurrent * (carouselOuter.offsetWidth + carouselGap)) + 'px)';
+  carouselDots.forEach(function(d, i){ d.classList.toggle('active', i === carouselCurrent); });
+}
+
+function carouselDragTo(dx) {
+  var maxOffset = carouselOuter.offsetWidth + carouselGap;
+  var offset = carouselCurrent * maxOffset - dx;
+  if (offset < 0) offset *= 0.25;
+  if (offset > maxOffset) offset = maxOffset + (offset - maxOffset) * 0.25;
+  carouselTrack.style.transform = 'translateX(-' + offset + 'px)';
+}
+
+var cStartX = 0, cStartY = 0, cLastX = 0, cLastT = 0;
+var cDragging = false, cLocked = false, cMovedH = false;
+
+carouselOuter.addEventListener('touchstart', function(e){
+  cStartX = cLastX = e.touches[0].clientX;
+  cStartY = e.touches[0].clientY;
+  cLastT = Date.now();
+  cDragging = true; cLocked = false; cMovedH = false;
+  carouselTrack.style.transition = 'none';
+}, {passive:true});
+
+carouselOuter.addEventListener('touchmove', function(e){
+  if (!cDragging) return;
+  var dx = e.touches[0].clientX - cStartX;
+  var dy = e.touches[0].clientY - cStartY;
+  if (!cLocked) {
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 6) { cMovedH = true; cLocked = true; }
+    else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 6) { cLocked = true; }
+  }
+  if (cMovedH) {
+    cLastX = e.touches[0].clientX;
+    cLastT = Date.now();
+    carouselDragTo(dx);
+  }
+}, {passive:true});
+
+carouselOuter.addEventListener('touchend', function(e){
+  if (!cDragging) return;
+  cDragging = false;
+  var dx = e.changedTouches[0].clientX - cStartX;
+  var dt = Date.now() - cLastT;
+  var velocity = dt < 200 ? (e.changedTouches[0].clientX - cLastX) / dt : 0;
+  var threshold = carouselOuter.offsetWidth * 0.25;
+  var flick = Math.abs(velocity) > 0.3;
+  var next = carouselCurrent;
+  if (cMovedH) {
+    if (flick || Math.abs(dx) > threshold) next = dx < 0 ? carouselCurrent + 1 : carouselCurrent - 1;
+  }
+  carouselGoTo(next);
+}, {passive:true});
+
+// Mouse support
+var mStart = 0, mLastX = 0, mLastT = 0, mDown = false, mMovedH = false, mLocked = false, mStartY = 0;
+carouselOuter.addEventListener('mousedown', function(e){
+  mStart = mLastX = e.clientX; mStartY = e.clientY;
+  mLastT = Date.now(); mDown = true; mMovedH = false; mLocked = false;
+  carouselTrack.style.transition = 'none';
+  e.preventDefault();
+});
+document.addEventListener('mousemove', function(e){
+  if (!mDown) return;
+  var dx = e.clientX - mStart, dy = e.clientY - mStartY;
+  if (!mLocked) {
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 6) { mMovedH = true; mLocked = true; }
+    else if (Math.abs(dy) > 6) { mLocked = true; }
+  }
+  if (mMovedH) {
+    mLastX = e.clientX; mLastT = Date.now();
+    carouselDragTo(dx);
+  }
+});
+document.addEventListener('mouseup', function(e){
+  if (!mDown) return; mDown = false;
+  var dx = e.clientX - mStart;
+  var dt = Date.now() - mLastT;
+  var velocity = dt < 200 ? (e.clientX - mLastX) / dt : 0;
+  var threshold = carouselOuter.offsetWidth * 0.25;
+  var flick = Math.abs(velocity) > 0.3;
+  var next = carouselCurrent;
+  if (mMovedH && (flick || Math.abs(dx) > threshold)) next = dx < 0 ? carouselCurrent + 1 : carouselCurrent - 1;
+  carouselGoTo(next);
+});
+</script>
+</body>
+</html>
